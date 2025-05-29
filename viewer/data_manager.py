@@ -146,8 +146,15 @@ class data_manager():
             methane = (methane/methane.max() * 65535).astype(np.uint16)
         else:
             c = np.polyfit(b6.flatten(), b7.flatten(), 1)
-            methane = ((c[0]*b6 + c[1]) - b7)*b6.mean()
+            methane = ((c[0]*b6 + c[1]) - b7)
+            dim = methane.shape
+            methane = methane.flatten() - methane.min()
+            pct = np.cumsum(np.bincount(methane.astype(np.int64)))/methane.size
+            r = [np.argmin(pct < 0.02), np.argmax(pct > 0.98)]
+            methane[methane < r[0]] = r[0]
+            methane[methane > r[1]] = r[1]
             methane = (methane-methane.min())/(methane.max()-methane.min())
+            methane = methane.reshape(dim[0],dim[1])
             methane = (methane*65535).astype(np.uint16)
         b6, b7 = None, None
         return methane
@@ -245,9 +252,8 @@ class data_manager():
                 self.listDT.setCurrentItem(item)
                 break
 
-
 def test_data_manager():
-    dir = 'C:\\Users\\daten\\AppData\\Local\\Temp\\data\\landsat'
+    dir = 'C:\\data\\landsat'
     dm = data_manager(working_folder=dir)
 
 if (__name__ == '__main__'):
