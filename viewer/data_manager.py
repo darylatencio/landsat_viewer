@@ -131,7 +131,7 @@ class data_manager():
         self.combo_box.setCurrentIndex(8)
         self.update_list()
 
-    def methane_image(self, dDT=None, ratio=False):
+    def methane_image(self, dDT=None):
         if (dDT == None):
             void, pr, dt = self.get_current_selection()
             if not void:
@@ -140,22 +140,17 @@ class data_manager():
             dDT = self.d[pr]
         b6 = self.open_file(dDT['B6']).astype(np.float32)
         b7 = self.open_file(dDT['B7']).astype(np.float32)
-        if ratio:
-            methane = b6/b7
-            methane = np.nan_to_num(methane)
-            methane = (methane/methane.max() * 65535).astype(np.uint16)
-        else:
-            c = np.polyfit(b6.flatten(), b7.flatten(), 1)
-            methane = ((c[0]*b6 + c[1]) - b7)
-            dim = methane.shape
-            methane = methane.flatten() - methane.min()
-            pct = np.cumsum(np.bincount(methane.astype(np.int64)))/methane.size
-            r = [np.argmin(pct < 0.02), np.argmax(pct > 0.98)]
-            methane[methane < r[0]] = r[0]
-            methane[methane > r[1]] = r[1]
-            methane = (methane-methane.min())/(methane.max()-methane.min())
-            methane = methane.reshape(dim[0],dim[1])
-            methane = (methane*65535).astype(np.uint16)
+        c = np.polyfit(b6.flatten(), b7.flatten(), 1)
+        methane = ((c[0]*b6 + c[1]) - b7)
+        dim = methane.shape
+        methane = methane.flatten() - methane.min()
+        pct = np.cumsum(np.bincount(methane.astype(np.int64)))/methane.size
+        r = [np.argmin(pct < 0.02), np.argmax(pct > 0.98)]
+        methane[methane < r[0]] = r[0]
+        methane[methane > r[1]] = r[1]
+        methane = (methane-methane.min())/(methane.max()-methane.min())
+        methane = methane.reshape(dim[0],dim[1])
+        methane = (methane*65535).astype(np.uint16)
         b6, b7 = None, None
         return methane
 
