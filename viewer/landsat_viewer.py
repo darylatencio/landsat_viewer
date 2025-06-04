@@ -30,6 +30,7 @@ class landsat_viewer(QtWidgets.QWidget):
         ll = [float(self.qLL[0].text()),float(self.qLL[1].text())]
         self.api.query(lonlat=ll, month=int(self.text_date[0].text()), year=int(self.text_date[1].text()))
         self.api.download_all()
+        self.dm.parse()
 
     def event_open(self):
         self.load_from_dm()
@@ -133,8 +134,8 @@ class landsat_viewer(QtWidgets.QWidget):
             qLL.setFixedWidth(50)
             layout_ll.addWidget(qLL)
         layout_bottom.addLayout(layout_ll)
-        button = QtWidgets.QPushButton('Search', self)
-        button.setFixedWidth(50)
+        button = QtWidgets.QPushButton("Download", self)
+        button.setFixedWidth(70)
         button.mousePressEvent = self.event_download
         layout_bottom.addWidget(button)
         layout_bottom.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
