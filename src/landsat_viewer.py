@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 import sys
@@ -219,14 +220,42 @@ class landsat_viewer(QtWidgets.QWidget):
         if not point.isNull():
             ll, xyMap = self.dm.get_data_coords((point.x(),point.y()))
             self.labelCoords.setText(
-                f"geo: [{ll[0]:.3f},{ll[1]:.3f}] map: [{xyMap[0]},{xyMap[1]}]  pixel: [{point.x()}, {point.y()}]")
+                f"geo: [{ll[0]:.3f},{ll[1]:.3f}] map: [{xyMap[0]},{xyMap[1]}]  "+
+                "pixel: [{point.x()}, {point.y()}]")
         else:
             self.labelCoords.clear()
 
-if __name__ == '__main__':
-    import sys
+#--------------------------------------------------------------------------------------------------
+#+
+#-
+def main(args):
+    cc = args.cloud_cover
+    ll = [args.lon, args.lat]
+    dir = args.working_folder
+    viewer = landsat_viewer(cloud_cover=cc, lonlat=ll, token=args.token,
+                            uname=args.uname, working_folder=dir)
+
+#--------------------------------------------------------------------------------------------------
+#+
+#-
+def test_landsat_viewer():
     print('testing Landsat viewer')
     cc = 50.0
     ll = [54.199,38.499]
     dir = 'C:\\data\\landsat'
     viewer = landsat_viewer(cloud_cover=cc, debug=True, lonlat=ll, working_folder=dir)
+
+#--------------------------------------------------------------------------------------------------
+#+
+#-
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--cloud_cover", type=float, default=50.0, help="maximum cloud cover percent allowed")
+    parser.add_argument("--lat", type=float, default=38.499, help="default longitude")
+    parser.add_argument("--lon", type=float, default=54.199, help="default latitude")
+    parser.add_argument("--token", type=str, default=None, help="EarthExplorer token")
+    parser.add_argument("--uname", type=str, default=None, help="EarthExplorer username")
+    parser.add_argument("--working_folder", type=str, default="C:\\data\\landsat")
+    args = parser.parse_args()
+    main(args)
+
