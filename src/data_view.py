@@ -87,12 +87,6 @@ class data_view(QtWidgets.QGraphicsView):
             self._zoom = 0
             self.reset(SCALE_FACTOR ** self._zoom)
 
-#    def toggleDragMode(self):
-#        if self.dragMode() == QtWidgets.QGraphicsView.DragMode.ScrollHandDrag:
-#            self.setDragMode(QtWidgets.QGraphicsView.DragMode.NoDrag)
-#        elif not self.pixmap_item.pixmap().isNull():
-#            self.setDragMode(QtWidgets.QGraphicsView.DragMode.ScrollHandDrag)
-
     def update(self):
         super().update()
 
