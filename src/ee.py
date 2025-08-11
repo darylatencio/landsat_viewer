@@ -104,6 +104,7 @@ class landsat():
                             print(f' {m.name}')
                             tar.extract(m, path=dir)
             tar.close()
+            os.remove(file)
         except:
             self.print(f'not a valid TAR file: {file}')
             return None
