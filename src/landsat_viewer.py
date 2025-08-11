@@ -1,52 +1,85 @@
 import json
 import os
 import sys
+import tkinter as tk
 from data_manager import data_manager
 from data_view import data_view
 from datetime import datetime
 from ee import landsat
+from login_dialog import *
 from PyQt6 import QtCore, QtGui, QtWidgets
+from pathlib import Path
+from tkinter import simpledialog
 
+#--------------------------------------------------------------------------------------------------
+#+
+#-
 class landsat_viewer(QtWidgets.QWidget):
 
     _pr = None
     app = QtWidgets.QApplication(sys.argv)
+    file_login = None
 
+    #----------------------------------------------------------------------------------------------
+    #+
+    #-
     def __init__(self, cloud_cover=None, debug=False, lonlat=None, login_file=None,
-                 parent=None, token=None, uname=None, working_folder=None):
+                 parent=None, save_login=False, token=None, uname=None, working_folder=None):
         super().__init__(parent)
         if (uname == None or token == None):
-            uname, token = self.get_login(file_login=login_file)
-        if (len(uname) == 0) or (len(token) == 0):
-            print("invalid username or password")
-            return None
+            uname, token, save_login = self.get_login(file_login=login_file)
         self.api = landsat(uname, token,
-                           cloud_cover=cloud_cover, debug=debug, lonlat=lonlat, working_folder=working_folder)
-        self.dm = data_manager(working_folder=self.api.dirWork)
+                           cloud_cover=cloud_cover, debug=debug, lonlat=lonlat,
+                           working_folder=working_folder)
+        if (save_login and (self.api.api_key != None)):
+            self.save_login(uname, token)
+        self.dm = data_manager(working_folder=self.api.dir_work)
         self.dm.add_listener(self)
         self.gui()
 
+    #----------------------------------------------------------------------------------------------
+    #+
+    #-
+    def dialog_get_login(self):
+        # root = tk.Tk()
+        # root.withdraw()
+        uname, pwd, save = get_ee_login()
+        return uname, pwd, save
+
+    #----------------------------------------------------------------------------------------------
+    #+
+    #-
     def event_download(self, event):
         ll = [float(self.qLL[0].text()),float(self.qLL[1].text())]
         self.api.query(lonlat=ll, month=int(self.text_date[0].text()), year=int(self.text_date[1].text()))
         self.api.download_all()
         self.dm.parse()
 
+    #----------------------------------------------------------------------------------------------
+    #+
+    #-
     def event_open(self):
         self.load_from_dm()
 
+    #----------------------------------------------------------------------------------------------
+    #+
+    #-
     def get_login(self, file_login=None):
-        if (file_login == None):
-            dir = os.getcwd()
-            file_login = os.path.join(dir, "resource", "ee_login.json")
-        uname, token = "", ""
-        if os.path.exists(file_login):
-            with open(file_login, "r") as file:
+        self.file_login = os.path.join(Path.home(), "methane_finder", "ee_login.json") if \
+            (file_login == None) else file_login
+        uname, token, save = "", "", False
+        if os.path.exists(self.file_login):
+            with open(self.file_login, "r") as file:
                 j = json.load(file)
                 uname = j["username"] if ("username" in j) else ""
                 token = j["token"] if ("token" in j) else ""
-        return uname, token
+        else:
+            uname, token, save = self.dialog_get_login()
+        return uname, token, save
 
+    #----------------------------------------------------------------------------------------------
+    #+
+    #-
     def gui(self):
         self.setWindowTitle('Landsat Viewer')
         self.resize(800,600)
@@ -59,6 +92,9 @@ class landsat_viewer(QtWidgets.QWidget):
         self.show()
         sys.exit(self.app.exec())
 
+    #----------------------------------------------------------------------------------------------
+    #+
+    #-
     def gui_display(self):
         tlb = QtWidgets.QWidget()
         tlb.resize(300,300)
@@ -141,21 +177,44 @@ class landsat_viewer(QtWidgets.QWidget):
         layout_bottom.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
         layout.addLayout(layout_bottom)
 
+    #----------------------------------------------------------------------------------------------
+    #+
+    #-
     def load_from_dm(self):
         pixmap = self.dm.get_data()
         pr = self.dm.get_pr()
         self.viewer.set_data(pixmap, reset=(pr != self._pr))
         self._pr = pr
 
+    #----------------------------------------------------------------------------------------------
+    #+
+    #-
+    def save_login(self, uname, tok):
+        print("saving login information")
+        dir = os.path.dirname(self.file_login)
+        if not os.path.exists(dir):
+            os.mkdir(dir)
+        with open(self.file_login, "w") as file:
+            json.dump({"username":uname, "token":tok}, file)
+
+    #----------------------------------------------------------------------------------------------
+    #+
+    #-
     def select_coords(self, point):
         if not point.isNull():
             ll, xyMap = self.dm.get_data_coords((point.x(), point.y()))
 
+    #----------------------------------------------------------------------------------------------
+    #+
+    #-
     def signal_datamanager(self, event):
         if not (self.isVisible() and self.buttonAuto.isChecked()):
             return None
         self.load_from_dm()
 
+    #----------------------------------------------------------------------------------------------
+    #+
+    #-
     def update_coords(self, point):
         if not point.isNull():
             ll, xyMap = self.dm.get_data_coords((point.x(),point.y()))
