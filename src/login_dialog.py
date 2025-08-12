@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk
+
 #--------------------------------------------------------------------------------------------------
 #+
 #-
@@ -19,7 +19,7 @@ class login:
             entry.grid(column=1, padx=5, pady=5, row=i)
             self.text.append(entry)
         self.cb_value = tk.BooleanVar()
-        checkbox = ttk.Checkbutton(self.tlb, text="Save Login", variable=self.cb_value)
+        checkbox = tk.Checkbutton(self.tlb, text="Save Login", variable=self.cb_value)
         checkbox.grid(column=0, row=len(self.labels))
         self.button = tk.Button(self.tlb, command=self.event_button, text="Login")
         self.button.grid(column=1, pady=10, row=len(self.labels))

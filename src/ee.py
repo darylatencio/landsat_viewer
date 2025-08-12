@@ -24,6 +24,9 @@ class landsat():
     url = 'https://m2m.cr.usgs.gov/api/api/json/stable/'
     url_download = []
 
+    #----------------------------------------------------------------------------------------------
+    #+
+    #-
     def __init__(self, uName, token, 
                  cloud_cover=30.0, debug=False, lonlat=[54.199,38.499], month=11,
                  working_folder=None, year=2018):
@@ -40,12 +43,18 @@ class landsat():
         self.login(uName, token)
         return None
 
+    #----------------------------------------------------------------------------------------------
+    #+
+    #-
     def __str__(self):
         if self.api_key:
             return f'EarthExplorer Landsat (API KEY: {self.api_key})'
         else:
             return 'EarthExplorer (not logged in)'
 
+    #----------------------------------------------------------------------------------------------
+    #+
+    #-
     def download(self, url, use_threads=True):
         void, dirOut = self.is_valid_url(url)
         if not void:
@@ -63,6 +72,9 @@ class landsat():
         else:
             self.download_thread(url, dirOut)
 
+    #----------------------------------------------------------------------------------------------
+    #+
+    #-
     def download_all(self, url=None, use_threads=True):
         urlAll = self.url_download if (url == None) else url
         if (len(urlAll) == 0):
@@ -72,6 +84,9 @@ class landsat():
         for thread in self.threads:
             thread.join()
 
+    #----------------------------------------------------------------------------------------------
+    #+
+    #-
     def download_thread(self, url, output_folder=None):
         if (output_folder == None):
             void, output_folder = self.is_valid_url(url)
@@ -88,7 +103,10 @@ class landsat():
         self.extract_tar(file)
         return None
 
-    def extract_tar(self, file):
+    #----------------------------------------------------------------------------------------------
+    #+
+    #-
+    def extract_tar(self, file, delete_tar=True):
         if (os.path.splitext(file)[1] != '.tar'):
             return None
         dir = os.path.dirname(file)
@@ -104,11 +122,15 @@ class landsat():
                             print(f' {m.name}')
                             tar.extract(m, path=dir)
             tar.close()
-            os.remove(file)
+            if delete_tar:
+                os.remove(file)
         except:
             self.print(f'not a valid TAR file: {file}')
             return None
 
+    #----------------------------------------------------------------------------------------------
+    #+
+    #-
     def get_id_from_url(self, url):
         strSearch = 'product_id='
         pos = url.find(strSearch)
@@ -117,9 +139,15 @@ class landsat():
         id = (url[pos+len(strSearch):].split('&'))[0]
         return id
 
+    #----------------------------------------------------------------------------------------------
+    #+
+    #-
     def get_working_folder(self):
         return self.dir_work
 
+    #----------------------------------------------------------------------------------------------
+    #+
+    #-
     def is_valid_url(self, url):
         id = self.get_id_from_url(url)
         if (len(id) == 0):
@@ -135,6 +163,9 @@ class landsat():
             os.mkdir(dirOut)
         return True, dirOut
 
+    #----------------------------------------------------------------------------------------------
+    #+
+    #-
     def login(self, uName, token):
         self.print('logging in...')
         url = urljoin(self.url,'login-token')
@@ -147,12 +178,18 @@ class landsat():
             return None
         self.api_key = j.get('data')
 
+    #----------------------------------------------------------------------------------------------
+    #+
+    #-
     def logout(self):
         self.print('logging out...')
         void, data = self.post('logout', None)
         self.session = requests.Session()
         self.api_key = None
 
+    #----------------------------------------------------------------------------------------------
+    #+
+    #-
     def post(self, ep, d_post, header=None, quiet=None):
         url = urljoin(self.url,ep)
         r = self.session.post(url,json.dumps(d_post),headers=header)
@@ -164,6 +201,9 @@ class landsat():
         data = j.get('data')
         return (True, data)
 
+    #----------------------------------------------------------------------------------------------
+    #+
+    #-
     def print(self,s):
         if (self.text_output != None):
             t = self.text_output.toPlainText()
@@ -175,6 +215,9 @@ class landsat():
             self.text_output.repaint()
         print(s)
 
+    #----------------------------------------------------------------------------------------------
+    #+
+    #-
     def query(self, cloud_cover=None, dataset_name=None, lonlat=None,
               max_return=None, month=None, year=None):
         if (self.api_key == None):
